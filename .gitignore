@@ -1,0 +1,3 @@
+*.pyc
+vectorbase.c
+vectorbase.so

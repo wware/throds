@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cython vectorbase.pyx || exit 1
+gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing -I/usr/include/python2.7 -o vectorbase.so vectorbase.c || exit 1
+pylint *.py && flake8 *.py && nosetests *.py
