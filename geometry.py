@@ -2,8 +2,11 @@ import logging
 import random
 import unittest
 from math import atan2, pi
+# pylint: disable=no-name-in-module
+from vector import Vector
+# pylint: enable=no-name-in-module
 from mechlib import (
-    Vector, Translate, Rotate, Color, Hide,
+    Translate, Rotate, Color, Hide,
     Cylinder, Container, Difference, Text
 )
 
