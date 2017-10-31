@@ -34,6 +34,8 @@ class Rod(Container):
         if not isinstance(v2, Vector):
             raise TypeError(v2)
         self.v1, self.v2 = self._original_vertices = (v1, v2)
+        self._ideal_vdist = (v2 - v1).length()
+        self._original_midpoint = 0.5 * (v1 + v2)
         self.label = None
 
     def nearest_distance(self, other):
@@ -80,12 +82,20 @@ class Rod(Container):
         return self.delta.length() + 2 * self.extend
 
     @property
+    def vdist_delta(self):
+        return self.delta.length() - self._ideal_vdist
+
+    @property
     def delta(self):
         return self.v2 - self.v1
 
     @property
     def midpoint(self):
         return 0.5 * (self.v1 + self.v2)
+
+    @property
+    def midpoint_drift(self):
+        return (self.midpoint - self._original_midpoint).length()
 
     @property
     def end1(self):
@@ -215,6 +225,13 @@ class RodGraph(Container):
     def __init__(self):
         Container.__init__(self)
 
+        def correct_rod_length(i):
+            def f():
+                rod = self.rods()[i]
+                dsq = rod.vdist_delta ** 2
+                return 10 * dsq
+            return f
+
         def hug_vertex(i, j):
             def f():
                 rod, vertex = self.rods()[i], self.vertices()[j]
@@ -251,10 +268,7 @@ class RodGraph(Container):
         def encourage_symmetry(i):
             def f():
                 rod = self.rods()[i]
-                orig_v1, orig_v2 = rod.original_vertices
-                orig_midpoint = .5 * (orig_v1 + orig_v2)
-                midpoint = .5 * (rod.v1 + rod.v2)
-                return (midpoint - orig_midpoint).length()
+                return 100 * rod.midpoint_drift ** 2
             return f
 
         def lookup_vertex(v):
@@ -269,6 +283,7 @@ class RodGraph(Container):
         rods = self.rods()
         for i, r in enumerate(rods):
             terms.append(encourage_symmetry(i))
+            terms.append(correct_rod_length(i))
             terms.append(hug_vertex(i, lookup_vertex(r.v1)))
             terms.append(hug_vertex(i, lookup_vertex(r.v2)))
             for j in range(i+1, len(rods)):
