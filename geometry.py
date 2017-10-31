@@ -216,18 +216,8 @@ class RodTest(unittest.TestCase):
         v1 = Vector(0, 0, 0)
         v2 = Vector(1, 0, 1)
         r = Rod(v1, v2)
-        r.label = 'ABCD'
-        r.prepareText(r.swidth).openscad()    # assign this to a variable
+        r.prepareText(r.swidth, 'ABCD').openscad()  # assign this to a variable
         # Write it to a scad file and examine it in OpenSCAD.
-
-    def test2(self):
-        v1 = Vector(0, 0, 0)
-        v2 = Vector(0, 0, 20)
-        r = Rod(v1, v2)
-        r.label = 'ABCD'
-        # c = r.parts_shell1()
-        # assert False, c.openscad()
-        # Write c.openscad() to a scad file and examine it in OpenSCAD.
 
 
 class RodGraph(Container):
