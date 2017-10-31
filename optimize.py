@@ -39,11 +39,29 @@ class Tetrahedron(RodGraph):
         ]
 
 
+class Octohedron(RodGraph):
+    def __init__(self, size):
+        x = (2 ** .5) * size
+        self.v0 = Vector(0, 0, x)
+        self.v1 = Vector(0, 0, -x)
+        self.v2 = Vector(0, x, 0)
+        self.v3 = Vector(0, -x, 0)
+        self.v4 = Vector(x, 0, 0)
+        self.v5 = Vector(-x, 0, 0)
+        RodGraph.__init__(self)
+
+    def vertices(self):
+        return [self.v0, self.v1, self.v2, self.v3, self.v4, self.v5]
+
+    def edges(self):
+        return [
+            (0, 2), (0, 3), (0, 4), (0, 5),
+            (1, 2), (1, 3), (1, 4), (1, 5),
+            (2, 4), (3, 4), (2, 5), (3, 5)
+        ]
+
+
 class Cube(RodGraph):
-    """
-    from geometry import *
-    print Tetrahedron(100).openscad()
-    """
     def __init__(self, size):
         self.v0 = Vector(-.5*size, -.5*size, -.5*size)
         self.v1 = Vector(-.5*size, -.5*size, .5*size)
@@ -71,7 +89,8 @@ class Cube(RodGraph):
 
 # T = Tetrahedron(100)
 # T = Cube(100)
-T = Tetrahedron(12 * INCH - 2 * EXTEND)
+# T = Tetrahedron(12 * INCH - 2 * EXTEND)
+T = Octohedron(12 * INCH - 2 * EXTEND)
 
 
 def simulated_anneal(func, initial, niter):
