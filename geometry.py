@@ -244,10 +244,9 @@ class RodGraph(Container):
         def hug_vertex(i, j):
             def f():
                 rod, vertex = self.rods()[i], self.vertices()[j]
-                # return 3 * rod.nearest_distance(vertex)
                 d1 = (rod.v1 - vertex).length()
                 d2 = (rod.v2 - vertex).length()
-                return min(d1, d2)
+                return 10 * min(d1, d2)
             return f
 
         def avoid_overlap(i, j):
@@ -277,7 +276,7 @@ class RodGraph(Container):
         def encourage_symmetry(i):
             def f():
                 rod = self.rods()[i]
-                return 100 * rod.midpoint_drift ** 2
+                return 1 * rod.midpoint_drift ** 2
             return f
 
         def lookup_vertex(v):
