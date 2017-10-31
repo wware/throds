@@ -36,7 +36,7 @@ class Rod(Container):
         self.v1, self.v2 = self._original_vertices = (v1, v2)
         self._ideal_vdist = (v2 - v1).length()
         self._original_midpoint = 0.5 * (v1 + v2)
-        self.label = None
+        self.label1 = self.label2 = None
 
     def nearest_distance(self, other):
         if isinstance(other, Rod):
@@ -106,7 +106,7 @@ class Rod(Container):
     def end2(self):
         return self.v2 + self.extend * self.delta.normal()
 
-    def parts_cylinder(self, center, length, diam):
+    def parts_cylinder(self, center, length, diam, label=None):
         # handle rotation to make the cylinder parallel to this rod
         kCrossDelta = Vector(0, 0, 1).cross(self.delta)
         theta = atan2(kCrossDelta.length(), self.delta.z) * 180 / pi
@@ -117,21 +117,27 @@ class Rod(Container):
                     Translate(0, 0, -.5 * length).containing(
                         Cylinder(h=length, d=diam)
                     ),
-                    diam
+                    diam,
+                    label
                 )
             )
         )
 
-    def addText(self, part, diam):
-        c = self.prepareText(diam)
-        if c is None:
+    def addText(self, part, diam, label):
+        if label is None:
             return part
         else:
-            return Difference.has(part, c)
+            return Difference.has(part, self.prepareText(diam, label))
 
-    def prepareText(self, diam):
+        # c = self.prepareText(diam, label)
+        # if c is None:
+        #     return part
+        # else:
+        #     return Difference.has(part, c)
+
+    def prepareText(self, diam, label):
         assert diam < 20
-        if self.label is None:
+        if label is None:
             return None
         c = Container()
         for angle in (0, 90, 180, 270):
@@ -140,7 +146,7 @@ class Rod(Container):
                     Translate(-2.5, 0.5 * diam, 0).containing(
                         Rotate(theta=-90, vector=[0, 1, 0]).containing(
                             Rotate(theta=-90, vector=[1, 0, 0]).containing(
-                                Text(self.label)
+                                Text(label)
                             )
                         )
                     )
@@ -176,14 +182,16 @@ class Rod(Container):
         return self.parts_cylinder(
             self.v1,
             self.sleeve,
-            self.swidth
+            self.swidth,
+            self.label1
         )
 
     def parts_shell2(self):
         return self.parts_cylinder(
             self.v2,
             self.sleeve,
-            self.swidth
+            self.swidth,
+            self.label2
         )
 
     def parts_shell(self):
@@ -328,10 +336,13 @@ class RodGraph(Container):
         if self._rods is None:
             verts = self.vertices()
             self._rods = []
+            i = 0
             for v1, v2 in self.edges():
                 r = Rod(verts[v1], verts[v2])
-                r.label = "{0} - {1}".format(v1, v2)
+                r.label1 = "{0}_>".format(i)
+                r.label2 = "<_{0}".format(i)
                 self._rods.append(r)
+                i += 1
         return self._rods
 
     def parts_positive(self):
