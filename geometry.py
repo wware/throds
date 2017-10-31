@@ -63,7 +63,8 @@ class Rod(Container):
 
     @property
     def width(self):
-        # how wide should the hole be?  1/4-20 thread => 1/4" plus a little elbow room
+        # how wide should the hole be?
+        # 1/4-20 thread => 1/4" plus a little elbow room
         elbow_room = 0.02
         return INCH * (0.25 + elbow_room)
 
