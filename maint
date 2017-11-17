@@ -1,11 +1,14 @@
 #!/bin/bash
 
+# dotted python version, e.g. "2.7"
+PYDVER=$(python -c "import sys; print sys.version[:3]")
+
 case "$(uname -s)" in
     Linux*)
-      -I/usr/include/python2.7
+      INCL=-I/usr/include/python${PYDVER}
     ;;
     Darwin*)
-      INCL=-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7
+      INCL=-I/System/Library/Frameworks/Python.framework/Versions/${PYDVER}/include/python${PYDVER}
       # LDSHARED="mpicc -bundle -undefined dynamic_lookup -DOMPI_IMPORTS"
       LDSHARED="-undefined dynamic_lookup -DOMPI_IMPORTS"
     ;;
