@@ -2,6 +2,7 @@ import logging
 import random
 import unittest
 from math import atan2, pi
+from mock import MagicMock
 # pylint: disable=no-name-in-module
 from vector import Vector
 # pylint: enable=no-name-in-module
@@ -375,3 +376,77 @@ class RodGraphTest(unittest.TestCase):
         # pos = tg.openscad_positive()
         # neg = tg.openscad_negative()
         self.assertTrue(True)    # put in a real test here some day
+
+
+class Symmetry(MagicMock):
+    pass
+
+
+def rot(*args, **kw):
+    s = Symmetry()
+    s.type = 'rotation'
+    s.args, s.kw = args, kw
+    return s
+
+
+def refl(*args, **kw):
+    s = Symmetry()
+    s.type = 'reflection'
+    s.args, s.kw = args, kw
+    return s
+
+
+def plane(point, normalvec):
+    s = Symmetry()
+    s.type = 'plane'
+    s.point, s.normalvec = point, normalvec
+    return s
+
+
+def graph(*tpls, **kwargs):
+    verts = []
+    edges = set()
+    tpls = list(tpls)
+    while tpls:
+        assert len(tpls) > 1, "need an even number of tuple arguments"
+        x, y, z = tpls.pop(0)
+        vpos = Vector(x, y, z)
+        connections = tpls.pop(0)
+        for c in connections:
+            edges.add(c)
+        verts.append((vpos, connections))
+    assert False, kwargs
+
+
+def test_graph_function():
+    center = (0, 0, 0.5)
+    tetrahedron = graph(
+        # locations of vertices        # edges, in order
+        (1, 0, 0),                     (0, 1, 2),
+        (-1, 0, 0),                    (0, 3, 4),
+        (0, 1, 1),                     (1, 4, 5),
+        (0, -1, 1),                    (2, 3, 5),
+        symmetries={
+            rot(center, 0, 1),
+            rot(center, 0, 2),
+            rot(center, 0, 3)
+        }
+    )
+
+    # xplane = plane((0, 0, 0), (1, 0, 0))
+    # yplane = plane((0, 0, 0), (0, 1, 0))
+    # zplane = plane((0, 0, 0), (0, 0, 1))
+    # cube = graph(
+    #     (1, 1, 1),   ...
+    #     (1, 1, -1),  ...
+    #     (1, -1, 1),  ...
+    #     ...
+    #     symmetries={
+    #         refl(zplane, 0, 1),
+    #         refl(zplane, 2, 3),
+    #         refl(yplane, 0, 2),
+    #         ...
+    #     }
+    # )
+
+    assert False
