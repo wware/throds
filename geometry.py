@@ -2,7 +2,6 @@ import logging
 import random
 import unittest
 from math import atan2, pi
-from mock import MagicMock
 # pylint: disable=no-name-in-module
 from vector import Vector
 # pylint: enable=no-name-in-module
@@ -378,45 +377,58 @@ class RodGraphTest(unittest.TestCase):
         self.assertTrue(True)    # put in a real test here some day
 
 
-class Symmetry(MagicMock):
-    pass
+class Symmetry(object):
+    def populate_vertices(self, verts, edge_pairs):
+        assert False
 
 
-def rot(*args, **kw):
-    s = Symmetry()
-    s.type = 'rotation'
-    s.args, s.kw = args, kw
-    return s
+def mkvector(xyz):
+    return xyz if isinstance(xyz, Vector) else Vector(xyz[0], xyz[1], xyz[2])
 
 
-def refl(*args, **kw):
-    s = Symmetry()
-    s.type = 'reflection'
-    s.args, s.kw = args, kw
-    return s
+class rot(Symmetry):
+    def __init__(self, centerpos, vert1index, vert2index):
+        self.center = mkvector(centerpos)
+        self.indexes = [vert1index, vert2index]
 
 
-def plane(point, normalvec):
-    s = Symmetry()
-    s.type = 'plane'
-    s.point, s.normalvec = point, normalvec
-    return s
+class plane(object):
+    def __init__(self, pt, normal):
+        self.pt = mkvector(pt)
+        self.indexes = [vert1index, vert2index]
+
+
+class refl(Symmetry):
+    def __init__(self, plane, vert1index, vert2index):
+        self.plane = plane
+        self.indexes = [vert1index, vert2index]
 
 
 def graph(*tpls, **kwargs):
     verts = []
-    edges = set()
     tpls = list(tpls)
+    edge_indices = set()
+    edge_pairs = {}
     while tpls:
         assert len(tpls) > 1, "need an even number of tuple arguments"
         x, y, z = tpls.pop(0)
         vpos = Vector(x, y, z)
-        connections = tpls.pop(0)
-        for c in connections:
-            edges.add(c)
-        verts.append((vpos, connections))
-    assert False, kwargs
+        edges = tpls.pop(0)
+        edge_indices = edge_indices.union(edges)
+        verts.append((vpos, edges))
+    for i, (v, e) in enumerate(verts):
+        for ei in e:
+            if ei not in edge_pairs:
+                edge_pairs[ei] = []
+            edge_pairs[ei].append(i)
+    for v, e in verts:
+        for ei in e:
+            assert len(edge_pairs[ei]) == 2
+    for s in kwargs.get('symmetries', []):
+        s.populate_vertices([v[0] for v in verts], edge_pairs)
 
+
+# nosetests --pdb geometry.py
 
 def test_graph_function():
     center = (0, 0, 0.5)
@@ -426,11 +438,11 @@ def test_graph_function():
         (-1, 0, 0),                    (0, 3, 4),
         (0, 1, 1),                     (1, 4, 5),
         (0, -1, 1),                    (2, 3, 5),
-        symmetries={
+        symmetries=[
             rot(center, 0, 1),
             rot(center, 0, 2),
             rot(center, 0, 3)
-        }
+        ]
     )
 
     # xplane = plane((0, 0, 0), (1, 0, 0))
