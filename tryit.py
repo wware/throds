@@ -2,6 +2,7 @@
 
 import os
 import random
+import sys
 from jinja2 import Environment, BaseLoader
 
 
@@ -68,9 +69,9 @@ for _ in xrange(10000):
 ROD_DIAM =  0.25
 
 def vec_lin(a, x, b, y):
-    return [a * x[0] + b * y[0],
+    return (a * x[0] + b * y[0],
             a * x[1] + b * y[1],
-            a * x[2] + b * y[2]]
+            a * x[2] + b * y[2])
 def vec_add(x, y):
     return vec_lin(1, x, 1, y)
 def vec_sub(x, y):
@@ -79,22 +80,26 @@ def vec_scale(k, x):
     return vec_lin(k, x, 0, x)
 def vec_dot(x, y):
     return x[0] * y[0] + x[1] * y[1] + x[2] * y[2]
+def vec_len(x):
+    return vec_dot(x, x) ** .5
 def vec_cross(x, y):
-    return [
+    return (
         x[1] * y[2] - x[2] * y[1],
         x[2] * y[0] - x[0] * y[2],
         x[0] * y[1] - x[1] * y[0]
-    ]
+    )
 
 
 class Edge(object):
     def __init__(self, end1, end2):
         self._end1 = end1
         self._end2 = end2
+        self._vertex1 = end1
+        self._vertex2 = end2
     def cylinder(self):
         return dict(
-            end1=self._end1,
-            end2=self._end2,
+            end1=list(self._end1),
+            end2=list(self._end2),
             diam=ROD_DIAM
         )
     def nudge(self):
@@ -104,7 +109,11 @@ class Edge(object):
         hlensq = vec_dot(h, h)
         assert hlensq > 1.e-12, hlensq
         h = vec_scale(ROD_DIAM / hlensq**.5, h)
-        return self.__class__(vec_add(self._end1, h), vec_sub(self._end2, h))
+        r = self.__class__(vec_add(self._end1, h), vec_sub(self._end2, h))
+        # keep _vertex1 and _vertex2 unmodified
+        r._vertex1 = self._vertex1
+        r._vertex2 = self._vertex2
+        return r
 
 
 class Dodecahedron(object):
@@ -114,7 +123,6 @@ class Dodecahedron(object):
         assert isinstance(size, (int, float)), size
         self.vertices = vertices = []
         step = pi * 72 / 180
-        halfstep = .5 * step
 
         def foo(i):
             theta = i * step
@@ -124,18 +132,18 @@ class Dodecahedron(object):
 
         for i in xrange(5):
             theta, ra, rb = foo(i)
-            vertices.append([ra * cos(theta), ra * sin(theta), A * size])
+            vertices.append((ra * cos(theta), ra * sin(theta), A * size))
         for i in xrange(5):
             theta, ra, rb = foo(i)
-            vertices.append([rb * cos(theta), rb * sin(theta), B * size])
+            vertices.append((rb * cos(theta), rb * sin(theta), B * size))
         for i in xrange(5):
             theta, ra, rb = foo(i + 0.5)
-            vertices.append([rb * cos(theta), rb * sin(theta), -B * size])
+            vertices.append((rb * cos(theta), rb * sin(theta), -B * size))
         for i in xrange(5):
             theta, ra, rb = foo(i + 0.5)
-            vertices.append([ra * cos(theta), ra * sin(theta), -A * size])
+            vertices.append((ra * cos(theta), ra * sin(theta), -A * size))
 
-        self.cylinders = cylinders = []
+        self._edges = edges = []
         for i in xrange(5):
             Ea = vertices[i]
             E2a = vertices[(i + 1) % 5]
@@ -144,28 +152,112 @@ class Dodecahedron(object):
             F2b = vertices[((i + 4) % 5) + 10]
             Ga = vertices[i + 15]
             G2a = vertices[((i + 1) % 5) + 15]
-            cylinders.append(Edge(Ea, Eb))
-            cylinders.append(Edge(Ea, E2a))
-            cylinders.append(Edge(Eb, Fb))
-            cylinders.append(Edge(Eb, F2b))
-            cylinders.append(Edge(Fb, Ga))
-            cylinders.append(Edge(Ga, G2a))
+            edges.append(Edge(Ea, Eb))
+            edges.append(Edge(Ea, E2a))
+            edges.append(Edge(Eb, Fb))
+            edges.append(Edge(Eb, F2b))
+            edges.append(Edge(Fb, Ga))
+            edges.append(Edge(Ga, G2a))
 
-    def nudge(self):
+    def clone(self, f=None):
+        def identity(x):
+            return x
+
+        if f is None: f = identity
         clone = self.__class__()
-        clone.cylinders = [x.nudge() for x in self.cylinders]
+        clone._edges = [f(x) for x in self._edges]
         clone.vertices = self.vertices
         return clone
 
+    def nudge(self, direction=None):
+        if direction is not None:
+            c = self.clone()
+            n = len(self._edges)
+            for i in range(n):
+                c._edges[i]._end1 = vec_add(c._edges[i]._end1, direction[3*i:3*i+3])
+            for i in range(len(self._edges)):
+                c._edges[i]._end2 = vec_add(c._edges[i]._end2, direction[3*(i+n):3*(i+n)+3])
+            return c
+        else:
+            return self.clone(lambda edge: edge.nudge())
+
     def data(self):
-        return [e.cylinder() for e in self.cylinders]
+        return [e.cylinder() for e in self._edges]
+
+    def errf(self):
+        def per_vertex(edge1, edge2, edge3, vertex):
+            subtotal = 0.
+            for e in (edge1, edge2, edge3):
+                x = vec_sub(e._end1, e._end2)
+                t = vec_dot(vertex, x)
+                x = vec_scale(t, x)
+                y = vec_sub(vertex, x)
+                ylen = vec_len(y)
+                subtotal += 10 * (ylen - (.5 * ROD_DIAM + 0.2)) ** 2
+                if t > .5:
+                    closer = e._end1
+                else:
+                    closer = e._end2
+                dist = vec_sub(vertex, closer)
+                subtotal += vec_dot(dist, dist)
+            return subtotal
+
+        edges_by_vertex = {}
+        for e in self._edges:
+            v1, v2 = e._vertex1, e._vertex2
+            if v1 not in edges_by_vertex:
+                edges_by_vertex[v1] = set()
+            if v2 not in edges_by_vertex:
+                edges_by_vertex[v2] = set()
+            edges_by_vertex[v1].add(e)
+            edges_by_vertex[v2].add(e)
+        total = 0.
+        for v in edges_by_vertex.keys():
+            assert len(edges_by_vertex[v]) == 3
+            e1, e2, e3 = edges_by_vertex[v]
+            total += per_vertex(e1, e2, e3, v)
+        return total
+
+    def partials(self):
+        _partials = []
+        clone = self.clone()
+        epsilon = 1.e-6
+        baseline = self.errf()
+        print baseline
+        units = [
+            (epsilon, 0, 0), (0, epsilon, 0), (0, 0, epsilon)
+        ]
+        for i in range(len(self._edges)):
+            for j in range(3):
+                clone._edges[i]._end1 = vec_add(clone._edges[i]._end1, units[j])
+                _partials.append((clone.errf() - baseline) / epsilon)
+        for i in range(len(self._edges)):
+            for j in range(3):
+                clone._edges[i]._end2 = vec_add(clone._edges[i]._end2, units[j])
+                _partials.append((clone.errf() - baseline) / epsilon)
+        return _partials
+
+    def minimize(self):
+        h = 0.05
+        c = self.clone()
+        for i in xrange(200):
+            print i
+            p = self.partials()
+            m = max([abs(x) for x in p])
+            p = [-(h / m) * x for x in p]
+            c = c.nudge(p)
+            h *= 0.8
+        print
+        return c
 
 
 rtemplate = Environment(loader=BaseLoader).from_string(
     open("template.scad").read()
 )
+dodec = Dodecahedron(size=12).nudge()
+dodec = dodec.minimize()
 open("z.scad", "w").write(rtemplate.render(dict(
-    cylinders=Dodecahedron(size=12).nudge().data()
+    cylinders=dodec.data()
     # cylinders = Dodecahedron(size=12).data()
 )))
 os.system('openscad z.scad')
