@@ -2,6 +2,12 @@ import ctypes
 
 lib = ctypes.CDLL("./x.so")
 
+def wrap_function(funcname, restype, argtypes):
+    func = lib.__getattr__(funcname)
+    func.restype = restype
+    func.argtypes = argtypes
+    return func
+
 
 class Vector(ctypes.Structure):
     _fields_ = ("x", ctypes.c_double), ("y", ctypes.c_double), ("z", ctypes.c_double)
@@ -11,22 +17,16 @@ class Vector(ctypes.Structure):
         self.y = y
         self.z = z
 
-        def wrap_function(lib, funcname, restype, argtypes):
-            func = lib.__getattr__(funcname)
-            func.restype = restype
-            func.argtypes = argtypes
-            return func
-
         self._dot_func = wrap_function(
-            lib, 'dot', ctypes.c_double,
+            'dot', ctypes.c_double,
             [ctypes.POINTER(Vector), ctypes.POINTER(Vector)]
         )
         self._cross_func = wrap_function(
-            lib, 'cross', Vector,
+            'cross', Vector,
             [ctypes.POINTER(Vector), ctypes.POINTER(Vector)]
         )
         self._linear_func = wrap_function(
-            lib, 'linear', Vector,
+            'linear', Vector,
             [ctypes.c_double, ctypes.POINTER(Vector), ctypes.c_double, ctypes.POINTER(Vector)]
         )
 
@@ -82,22 +82,46 @@ class Edge(ctypes.Structure):
 
 
 Vector.tests()
-
-class Shape(object):
-    # Base shape is a tetrahedron, this is misshapen
-    vertices = (
-        Vector(1, 0, -1),
-        Vector(-1, 0, -1),
-        Vector(1, 0, 1),
-        Vector(-1, 0, 1)
-    )
-
-    edges = (
-        (0, 1), (0, 2), (0, 3),
-        (1, 2), (1, 3), (2, 3)
-    )
+print "======"
 
 
+class Shape(ctypes.Structure):
+    _fields_ = [
+        ("num_vertices", ctypes.c_int),
+        ("vertices", ctypes.POINTER(Vector)),
+        ("num_edges", ctypes.c_int),
+        ("edges", ctypes.POINTER(Edge))
+    ]
 
-s = Shape()
+
+class Tetrahedron(Shape):
+    def __init__(self):
+        self.num_vertices = 4
+        vertices = a, b, c, d = (
+            Vector(1, 0, -1),
+            Vector(-1, 0, -1),
+            Vector(1, 0, 1),
+            Vector(-1, 0, 1)
+        )
+        self.vertices = (Vector * 4)(*vertices)
+        self.num_edges = 6
+        self.edges = (Edge * 6)(*(
+            (0, 1, a, b),
+            (0, 2, a, c),
+            (0, 3, a, d),
+            (1, 2, b, c),
+            (1, 3, b, d),
+            (2, 3, c, d)
+        ))
+
+# void print_shape(Shape *shape)
+_print_shape = wrap_function(
+    'print_shape', None,
+    [ctypes.POINTER(Shape)]
+)
+
+
+s = Tetrahedron()
 print s.vertices[1]
+
+_print_shape(s)

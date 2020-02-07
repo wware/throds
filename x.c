@@ -45,3 +45,23 @@ Vector cross(Vector *v1, Vector *v2)
     };
     return v;
 }
+
+typedef struct {
+    int num_vertices;
+    Vector *vertices;
+    int num_edges;
+    Edge *edges;
+} Shape;
+
+void print_shape(Shape *shape)
+{
+    int i;
+    printf("%d %d\n", shape->num_vertices, shape->num_edges);
+    for (i = 0; i < shape->num_vertices; i++)
+        printf("%lf %lf %lf\n", shape->vertices[i].x, shape->vertices[i].y, shape->vertices[i].z);
+    for (i = 0; i < shape->num_edges; i++) {
+        Edge *e = &shape->edges[i];
+        printf("%d %d\n", e->v1, e->v2);
+        printf("%lf %lf %lf\n", e->end1.x, e->end1.y, e->end1.z);
+    }
+}
