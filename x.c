@@ -7,6 +7,7 @@
    https://stackoverflow.com/questions/161788 */
 
 #include <stdio.h>
+#include "Python.h"
 
 typedef struct {
     double x, y, z;
@@ -18,6 +19,12 @@ typedef struct {
     Vector end1;
     Vector end2;
 } Edge;
+
+PyMODINIT_FUNC
+initx(void)
+{
+    (void) Py_InitModule("x", NULL);
+}
 
 Vector linear(double a, Vector *v1, double b, Vector *v2)
 {

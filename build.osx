@@ -1,0 +1,5 @@
+#!/bin/bash
+INCLDIR=/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7
+LINKDIR=/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config
+gcc -Wall -O2 -c -I${INCLDIR} x.c || exit 1
+gcc -shared -L${LINKDIR} -o x.so x.o -lpython2.7

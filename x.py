@@ -2,6 +2,7 @@ import ctypes
 
 lib = ctypes.CDLL("./x.so")
 
+
 def wrap_function(funcname, restype, argtypes):
     func = lib.__getattr__(funcname)
     func.restype = restype
@@ -10,9 +11,14 @@ def wrap_function(funcname, restype, argtypes):
 
 
 class Vector(ctypes.Structure):
-    _fields_ = ("x", ctypes.c_double), ("y", ctypes.c_double), ("z", ctypes.c_double)
+    _fields_ = [
+        ("x", ctypes.c_double),
+        ("y", ctypes.c_double),
+        ("z", ctypes.c_double)
+    ]
 
     def __init__(self, x, y, z):
+        ctypes.Structure.__init__(self)
         self.x = x
         self.y = y
         self.z = z
@@ -27,13 +33,14 @@ class Vector(ctypes.Structure):
         )
         self._linear_func = wrap_function(
             'linear', Vector,
-            [ctypes.c_double, ctypes.POINTER(Vector), ctypes.c_double, ctypes.POINTER(Vector)]
+            [ctypes.c_double, ctypes.POINTER(Vector),
+             ctypes.c_double, ctypes.POINTER(Vector)]
         )
 
     def __repr__(self):
         return '({0}, {1}, {2})'.format(self.x, self.y, self.z)
 
-    def __neg__(self, other):
+    def __neg__(self):
         return self._linear_func(-1., self, 0., self)
 
     def __add__(self, other):
@@ -96,6 +103,7 @@ class Shape(ctypes.Structure):
 
 class Tetrahedron(Shape):
     def __init__(self):
+        Shape.__init__(self)
         self.num_vertices = 4
         vertices = a, b, c, d = (
             Vector(1, 0, -1),
@@ -113,6 +121,7 @@ class Tetrahedron(Shape):
             (1, 3, b, d),
             (2, 3, c, d)
         ))
+
 
 # void print_shape(Shape *shape)
 _print_shape = wrap_function(

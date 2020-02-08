@@ -1,29 +1,25 @@
 #!/usr/bin/env python
 
 import os
-import random
-import sys
-from jinja2 import Environment, BaseLoader
-
-
-"""
-The top five vertices are at 72-degree increments at a height of z=A.
-The next five vertices are at the same 72-degree incremenets at a
-height of z=B. Next five are offset by 36 degrees, with z=-B, and last
-five are also offset by 36 degrees with z=-A. The trick is to make sure
-all the lengths are the same, and solve for A and B.
-Let Ea and Fa be two adjacent vertices of the top five. Let Eb and Fb
-be the vertices below them at z=B. Let Gb be the vertex connecting to
-Eb and Fb at z=-B, then you have
-    d = |Ea-Fa|^2 = |Ea-Eb|^2 = |Eb-Gb|^2 = |Fb-Gb|^2
-Then we can just set up an error function of the differences between
-these four distances, and do gradient descent in A and B to make all
-the distances equal.
-Without loss of generality assume all vertices are distance 1 from the
-origin.
-"""
-
 from math import pi, cos, sin
+from jinja2 import Environment, BaseLoader
+# pylint: disable=protected-access,redefined-outer-name,too-many-locals
+
+
+# The top five vertices are at 72-degree increments at a height of z=A.
+# The next five vertices are at the same 72-degree incremenets at a
+# height of z=B. Next five are offset by 36 degrees, with z=-B, and last
+# five are also offset by 36 degrees with z=-A. The trick is to make sure
+# all the lengths are the same, and solve for A and B.
+# Let Ea and Fa be two adjacent vertices of the top five. Let Eb and Fb
+# be the vertices below them at z=B. Let Gb be the vertex connecting to
+# Eb and Fb at z=-B, then you have
+#     d = |Ea-Fa|^2 = |Ea-Eb|^2 = |Eb-Gb|^2 = |Fb-Gb|^2
+# Then we can just set up an error function of the differences between
+# these four distances, and do gradient descent in A and B to make all
+# the distances equal.
+# Without loss of generality assume all vertices are distance 1 from the
+# origin.
 
 
 class vertices(object):
@@ -56,6 +52,7 @@ K = 3
 A, B = 0.8, 0.3
 h = 1.e-12
 m = 1.e-4
+ROD_DIAM = 0.25
 
 for _ in xrange(10000):
     v1 = vertices(A, B)
@@ -66,22 +63,33 @@ for _ in xrange(10000):
     A -= m * partialA
     B -= m * partialB
 
-ROD_DIAM =  0.25
 
 def vec_lin(a, x, b, y):
     return (a * x[0] + b * y[0],
             a * x[1] + b * y[1],
             a * x[2] + b * y[2])
+
+
 def vec_add(x, y):
     return vec_lin(1, x, 1, y)
+
+
 def vec_sub(x, y):
     return vec_lin(1, x, -1, y)
+
+
 def vec_scale(k, x):
     return vec_lin(k, x, 0, x)
+
+
 def vec_dot(x, y):
     return x[0] * y[0] + x[1] * y[1] + x[2] * y[2]
+
+
 def vec_len(x):
     return vec_dot(x, x) ** .5
+
+
 def vec_cross(x, y):
     return (
         x[1] * y[2] - x[2] * y[1],
@@ -96,12 +104,14 @@ class Edge(object):
         self._end2 = end2
         self._vertex1 = end1
         self._vertex2 = end2
+
     def cylinder(self):
         return dict(
             end1=list(self._end1),
             end2=list(self._end2),
             diam=ROD_DIAM
         )
+
     def nudge(self):
         center = vec_lin(.5, self._end1, .5, self._end2)
         span = vec_lin(1, self._end1, -1, center)
@@ -163,7 +173,8 @@ class Dodecahedron(object):
         def identity(x):
             return x
 
-        if f is None: f = identity
+        if f is None:
+            f = identity
         clone = self.__class__()
         clone._edges = [f(x) for x in self._edges]
         clone.vertices = self.vertices
@@ -174,9 +185,11 @@ class Dodecahedron(object):
             c = self.clone()
             n = len(self._edges)
             for i in range(n):
-                c._edges[i]._end1 = vec_add(c._edges[i]._end1, direction[3*i:3*i+3])
+                c._edges[i]._end1 = vec_add(c._edges[i]._end1,
+                                            direction[3*i:3*i+3])
             for i in range(len(self._edges)):
-                c._edges[i]._end2 = vec_add(c._edges[i]._end2, direction[3*(i+n):3*(i+n)+3])
+                c._edges[i]._end2 = vec_add(c._edges[i]._end2,
+                                            direction[3*(i+n):3*(i+n)+3])
             return c
         else:
             return self.clone(lambda edge: edge.nudge())
@@ -229,11 +242,17 @@ class Dodecahedron(object):
         ]
         for i in range(len(self._edges)):
             for j in range(3):
-                clone._edges[i]._end1 = vec_add(clone._edges[i]._end1, units[j])
+                clone._edges[i]._end1 = vec_add(
+                    clone._edges[i]._end1,
+                    units[j]
+                )
                 _partials.append((clone.errf() - baseline) / epsilon)
         for i in range(len(self._edges)):
             for j in range(3):
-                clone._edges[i]._end2 = vec_add(clone._edges[i]._end2, units[j])
+                clone._edges[i]._end2 = vec_add(
+                    clone._edges[i]._end2,
+                    units[j]
+                )
                 _partials.append((clone.errf() - baseline) / epsilon)
         return _partials
 
