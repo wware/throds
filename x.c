@@ -7,6 +7,7 @@
    https://stackoverflow.com/questions/161788 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "Python.h"
 
 typedef struct {
@@ -70,5 +71,68 @@ void print_shape(Shape *shape)
         Edge *e = &shape->edges[i];
         printf("%d %d\n", e->v1, e->v2);
         printf("%lf %lf %lf\n", e->end1.x, e->end1.y, e->end1.z);
+    }
+}
+
+/**
+    def errf(self):
+        def per_vertex(edge1, edge2, edge3, vertex):
+            subtotal = 0.
+            for e in (edge1, edge2, edge3):
+                x = vec_sub(e._end1, e._end2)
+                t = vec_dot(vertex, x)
+                x = vec_scale(t, x)
+                y = vec_sub(vertex, x)
+                ylen = vec_len(y)
+                subtotal += 10 * (ylen - (.5 * ROD_DIAM + 0.2)) ** 2
+                if t > .5:
+                    closer = e._end1
+                else:
+                    closer = e._end2
+                dist = vec_sub(vertex, closer)
+                subtotal += vec_dot(dist, dist)
+            return subtotal
+
+        edges_by_vertex = {}
+        for e in self._edges:
+            v1, v2 = e._vertex1, e._vertex2
+            if v1 not in edges_by_vertex:
+                edges_by_vertex[v1] = set()
+            if v2 not in edges_by_vertex:
+                edges_by_vertex[v2] = set()
+            edges_by_vertex[v1].add(e)
+            edges_by_vertex[v2].add(e)
+        total = 0.
+        for v in edges_by_vertex.keys():
+            assert len(edges_by_vertex[v]) == 3
+            e1, e2, e3 = edges_by_vertex[v]
+            total += per_vertex(e1, e2, e3, v)
+        return total
+**/
+
+struct list_link {
+    struct list_link *next;
+    int direction;
+    Edge *edge;
+};
+
+struct list_link add_to_list(struct list_link *previous, int dir, Edge *e)
+{
+    struct list_link r = { previous, dir, e };
+    return r;
+}
+
+double errf(Shape *shape)
+{
+    struct list_link this, **edges_per_vertex;
+    int i;
+    edges_per_vertex = malloc(shape->num_vertices * sizeof(struct list_link *));
+    if (edges_per_vertex == NULL) {
+        fprintf(stderr, "Out of memory!\n");
+        exit(1);
+    }
+    for (i = 0; i < shape->num_vertices; i++) {
+        edges_per_vertex[i] = NULL;
+        this = add_to_list(edges_per_vertex[i]);
     }
 }

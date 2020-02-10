@@ -279,4 +279,8 @@ open("z.scad", "w").write(rtemplate.render(dict(
     cylinders=dodec.data()
     # cylinders = Dodecahedron(size=12).data()
 )))
-os.system('openscad z.scad')
+
+# Linux
+if os.system('openscad z.scad 2> /dev/null') != 0:
+    # Mac
+    os.system("$(locate OpenSCAD | grep -E '/OpenSCAD$') z.scad")
