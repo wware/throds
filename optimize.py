@@ -117,9 +117,39 @@ def simulated_anneal(func, initial, niter):
     return x
 
 
+def gradient_descent(func, initial, niter):
+
+    def make_random(size):
+        return [(2 * random.random() - 1) * size for _ in range(len(initial))]
+
+    def add(lst1, lst2):
+        return [x + y for x, y in zip(lst1, lst2)]
+
+    x = initial
+    N = len(initial)
+    zeros = N * [0.]
+    h = 1.e-6
+    K = 0.001
+    f = func(x)
+
+    for _ in xrange(niter):
+        for i in xrange(N):
+            y = zeros[:]
+            y[i] = h
+            y = add(x, y)
+            fy = func(y)
+            d = (fy - f) / h    # derivative
+            x[i] -= K * d
+            f = func(x)
+            # print f
+
+    return x
+
+
 def main():
     result = None
-    result = simulated_anneal(T.fitness, T.to_list(), niter=500)
+    # result = simulated_anneal(T.fitness, T.to_list(), niter=500)
+    result = gradient_descent(T.fitness, T.to_list(), niter=500)
     T.from_list(result)
 
     template1 = """
