@@ -269,25 +269,32 @@ class RodGraph(Container):
                 return 1 * rod.midpoint_drift ** 2
             return f
 
-        def lookup_vertex(v):
-            verts = self.vertices()
-            for i, vert in enumerate(verts):
-                if v == vert:
-                    return i
-            assert False, 'vertex not found'
-
         self._rods = None
         self.terms = terms = []
         rods = self.rods()
         for i, r in enumerate(rods):
             terms.append(encourage_symmetry(i))
             terms.append(correct_rod_length(i))
-            terms.append(hug_vertex(i, lookup_vertex(r.v1)))
-            terms.append(hug_vertex(i, lookup_vertex(r.v2)))
+            terms.append(hug_vertex(i, self.lookup_vertex(r.v1)))
+            terms.append(hug_vertex(i, self.lookup_vertex(r.v2)))
             for j in range(i+1, len(rods)):
                 r2 = rods[j]
                 if r.shares_vertex_with(r2):
                     terms.append(avoid_overlap(i, j))
+
+    def lookup_vertex(self, v):
+        for i, vert in enumerate(self.vertices()):
+            if v == vert:
+                return i
+        assert False, 'vertex not found'
+
+    def twist(self, d):
+        for r in self.rods():
+            mid = r._original_midpoint
+            w = mid.cross(r.v1 - mid)
+            delta = (d / w.length()) * w
+            r.v1 += delta
+            r.v2 -= delta
 
     def to_list(self):
         lst = []

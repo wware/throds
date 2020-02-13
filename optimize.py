@@ -91,7 +91,7 @@ class Cube(RodGraph):
 # T = Cube(100)
 # T = Tetrahedron(12 * INCH - 2 * EXTEND)
 T = Octohedron(12 * INCH - 2 * EXTEND)
-
+T.twist(0.25 * INCH)
 
 def simulated_anneal(func, initial, niter):
 
@@ -133,15 +133,17 @@ def gradient_descent(func, initial, niter):
     f = func(x)
 
     for _ in xrange(niter):
+        f = func(x)
+        # print f
+        delta = []
         for i in xrange(N):
             y = zeros[:]
             y[i] = h
             y = add(x, y)
             fy = func(y)
             d = (fy - f) / h    # derivative
-            x[i] -= K * d
-            f = func(x)
-            # print f
+            delta.append(-K * d)
+        x = add(x, delta)
 
     return x
 
