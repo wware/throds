@@ -87,6 +87,28 @@ class Cube(RodGraph):
         ]
 
 
+from shapes import ObjBuilder as _ObjBuilder, dodecahedron
+
+class ObjBuilder(_ObjBuilder):
+    def __init__(self):
+        _ObjBuilder.__init__(self)
+        self._vertices = []
+        self._edges = []
+    def add_vertex(self, vec):
+        self._vertices.append(Vector(vec))
+    def add_edge(self, i, j):
+        self._edges.append((i, j))
+    def getRodGraph(self):
+        rg = RodGraph()
+        rg.vertices = lambda other: self._vertices
+        rg.edges = lambda other: self._edges
+        return rg
+
+ob = ObjBuilder()
+d = dodecahedron(12 * 25.4, ob)
+import pdb; pdb.set_trace()
+
+
 # T = Tetrahedron(100)
 # T = Cube(100)
 # T = Tetrahedron(12 * INCH - 2 * EXTEND)
