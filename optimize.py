@@ -95,7 +95,7 @@ class ObjBuilder(_ObjBuilder):
         self._vertices = []
         self._edges = []
     def add_vertex(self, vec):
-        self._vertices.append(Vector(vec))
+        self._vertices.append(Vector(*vec))
     def add_edge(self, i, j):
         self._edges.append((i, j))
     def getRodGraph(self):
@@ -105,14 +105,14 @@ class ObjBuilder(_ObjBuilder):
         return rg
 
 ob = ObjBuilder()
-d = dodecahedron(12 * 25.4, ob)
-import pdb; pdb.set_trace()
+dodecahedron(12 * 25.4, ob)
+T = ob.getRodGraph()
 
 
 # T = Tetrahedron(100)
 # T = Cube(100)
 # T = Tetrahedron(12 * INCH - 2 * EXTEND)
-T = Octohedron(12 * INCH - 2 * EXTEND)
+#T = Octohedron(12 * INCH - 2 * EXTEND)
 T.twist(0.25 * INCH)
 
 def simulated_anneal(func, initial, niter):
