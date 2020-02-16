@@ -1,0 +1,4 @@
+#!/bin/bash
+
+OPENSCAD=$(locate OpenSCAD | grep -E '/OpenSCAD$')
+${OPENSCAD} $1
