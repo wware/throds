@@ -331,6 +331,7 @@ class RodGraph(Container):
     def rods(self):
         if self._rods is None:
             verts = self.vertices()
+            logging.debug(verts)
             self._rods = []
             i = 0
             for v1, v2 in self.edges():

@@ -95,12 +95,16 @@ class ObjBuilder(_ObjBuilder):
         self._vertices = []
         self._edges = []
     def add_vertex(self, vec):
+        logging.debug(vec)
         self._vertices.append(Vector(*vec))
     def add_edge(self, i, j):
+        logging.debug((i, j))
         self._edges.append((i, j))
     def getRodGraph(self):
         rg = RodGraph()
+        logging.debug(self._vertices)
         rg.vertices = lambda other: self._vertices
+        logging.debug(self._edges)
         rg.edges = lambda other: self._edges
         return rg
 
@@ -156,7 +160,7 @@ def gradient_descent(func, initial, niter):
 
     for _ in xrange(niter):
         f = func(x)
-        # print f
+        logging.debug(f)
         delta = []
         for i in xrange(N):
             y = zeros[:]
@@ -173,7 +177,8 @@ def gradient_descent(func, initial, niter):
 def main():
     result = None
     # result = simulated_anneal(T.fitness, T.to_list(), niter=500)
-    result = gradient_descent(T.fitness, T.to_list(), niter=500)
+    # result = gradient_descent(T.fitness, T.to_list(), niter=500)
+    result = gradient_descent(T.fitness, T.to_list(), niter=3)
     T.from_list(result)
 
     template1 = """
