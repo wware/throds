@@ -101,11 +101,14 @@ class ObjBuilder(_ObjBuilder):
         logging.debug((i, j))
         self._edges.append((i, j))
     def getRodGraph(self):
+        vertices = self._vertices[:]
+        edges = self._edges[:]
         rg = RodGraph()
-        logging.debug(self._vertices)
-        rg.vertices = lambda other: self._vertices
-        logging.debug(self._edges)
-        rg.edges = lambda other: self._edges
+        logging.debug(vertices)
+        logging.debug(edges)
+        rg.vertices = lambda: vertices
+        rg.edges = lambda: edges
+        rg.innards()
         return rg
 
 ob = ObjBuilder()
@@ -177,8 +180,8 @@ def gradient_descent(func, initial, niter):
 def main():
     result = None
     # result = simulated_anneal(T.fitness, T.to_list(), niter=500)
-    # result = gradient_descent(T.fitness, T.to_list(), niter=500)
-    result = gradient_descent(T.fitness, T.to_list(), niter=3)
+    result = gradient_descent(T.fitness, T.to_list(), niter=500)
+    # result = gradient_descent(T.fitness, T.to_list(), niter=3)
     T.from_list(result)
 
     template1 = """

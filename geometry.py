@@ -223,7 +223,9 @@ class RodTest(unittest.TestCase):
 class RodGraph(Container):
     def __init__(self):
         Container.__init__(self)
+        self.innards()
 
+    def innards(self):
         def correct_rod_length(i):
             def f():
                 rod = self.rods()[i]
