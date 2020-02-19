@@ -338,8 +338,8 @@ class RodGraph(Container):
             i = 0
             for v1, v2 in self.edges():
                 r = Rod(verts[v1], verts[v2])
-                r.label1 = "{0}_>".format(i)
-                r.label2 = "<_{0}".format(i)
+                r.label1 = "> > >"
+                r.label2 = "< < <"
                 self._rods.append(r)
                 i += 1
         return self._rods

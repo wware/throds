@@ -180,7 +180,7 @@ def gradient_descent(func, initial, niter):
 def main():
     result = None
     # result = simulated_anneal(T.fitness, T.to_list(), niter=500)
-    result = gradient_descent(T.fitness, T.to_list(), niter=500)
+    result = gradient_descent(T.fitness, T.to_list(), niter=100)
     # result = gradient_descent(T.fitness, T.to_list(), niter=3)
     T.from_list(result)
 
@@ -220,6 +220,28 @@ union() {
         gap = 60
         offsets = [
             (0, 0), (gap, 0), (gap, gap), (0, gap)
+        ]
+        for key, offset in zip(dct.keys(), offsets):
+            v = dct2[key]
+            shells = dct[key]
+            cutouts = dct3[key]
+            print (
+                (Vector(offset[0], offset[1], 0) - v).make_translate() +
+                '\ndifference() {{\nunion() {{\n{0}\n}}\n'.format(
+                    '\n'.join(shells)
+                ) +
+                'union() {\n' + '\n'.join(cutouts) + '\n}\n}'
+            )
+        sys.exit(0)
+    elif '--single' in sys.argv[1:]:
+        dct = {}
+        dct2 = {}
+        dct3 = {}
+        for r in T.rods():
+            r.D(dct, dct2, dct3)
+        gap = 60
+        offsets = [
+            (0, 0),
         ]
         for key, offset in zip(dct.keys(), offsets):
             v = dct2[key]
