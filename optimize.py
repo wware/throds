@@ -112,7 +112,7 @@ class ObjBuilder(_ObjBuilder):
         return rg
 
 ob = ObjBuilder()
-dodecahedron(12 * 25.4, ob)
+dodecahedron(12 * INCH - 2 * EXTEND, ob)
 T = ob.getRodGraph()
 
 
